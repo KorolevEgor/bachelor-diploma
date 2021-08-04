@@ -1,0 +1,39 @@
+\documentclass[a4paper,14pt,russian]{extreport}
+\input{header.tex}
+
+%Дипломная работа: \pageref*{LastPage}~с., \totfig~рис., \tottab~табл...
+
+\begin{document}
+
+\tableofcontents
+\newpage
+
+\likechapter{Введение}
+\subfile{Sections/1_introduce}
+
+\chapter{Обор предметной области}
+\subfile{Sections/2_overview_of_the_subject_area}
+
+\chapter{Предварительный анализ данных}
+\subfile{Sections/3_preliminary_data_analysis}
+
+\chapter{Методы решения задачи}
+\subfile{Sections/4_solution_methods}
+
+\chapter{Сравнительный анализ}
+\subfile{Sections/5_comparative_analysis}
+
+\newpage
+\likechapter{Заключение}
+\subfile{Sections/6_conclusion}
+
+%\listoffigures
+%\listoftables
+
+%\cite{coursera:andrew_ng}
+
+\newpage
+\subfile{Sections/7_bliography}
+
+
+\end{document}
