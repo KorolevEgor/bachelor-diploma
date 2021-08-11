@@ -1,6 +1,13 @@
+
 *.aux
 *.bbl
 *.blg
 *.log
 *.synctex.gz
 *.toc
+*.lot
+*.lol
+*.lof
+
+_minted-Diploma
+.ipynb_checkpoints

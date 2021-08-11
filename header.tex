@@ -39,7 +39,7 @@
 % подписи под изображениями и таблицами
 \usepackage[tableposition=top]{caption}
 \usepackage{subcaption}
-\DeclareCaptionLabelFormat{gostfigure}{� исунок #2}
+\DeclareCaptionLabelFormat{gostfigure}{Рисунок #2}
 \DeclareCaptionLabelFormat{gosttable}{Таблица #2}
 \DeclareCaptionLabelSeparator{gost}{~---~}
 \captionsetup{labelsep=gost}
@@ -86,7 +86,6 @@
 
 % списки
 \usepackage{enumitem}
-\makeatletter
 \AddEnumerateCounter{\asbuk}{\@asbuk}{м)}
 \makeatother
 \setlist{nolistsep}
@@ -126,6 +125,24 @@
 
 
 
+% списки иллюстраций, листингов и таблиц
+\renewcommand{\cftlottitlefont}{\hspace{0.38\textwidth} \bfseries}
+\renewcommand{\cftbeforelottitleskip}{-1em}
+\renewcommand{\cftafterlottitle}{\mbox{}\hfill \\ \mbox{}\hfill{\footnotesize Стр.}\vspace{-2.5em}}
+
+\renewcommand{\cftloftitlefont}{\hspace{0.34\textwidth} \bfseries}
+\renewcommand{\cftbeforeloftitleskip}{-1em}
+\renewcommand{\cftafterloftitle}{\mbox{}\hfill \\ \mbox{}\hfill{\footnotesize Стр.}\vspace{-2.5em}}
+
+\usepackage{listing}
+\renewcommand{\listlistingname}{Список программных листингов}
+
+\addto\captionsrussian{
+    \renewcommand{\cftfigfont}{Рисунок }
+    \renewcommand{\cfttabfont}{Таблица }
+}
+
+
 
 % список литературы
 \usepackage[square,numbers,sort&compress]{natbib}
@@ -160,5 +177,19 @@
 
 
 \usepackage{subfiles}       % Include TeX files
-%\usepackage{minted}         % Include code listings
 %\usepackage{xcolor}         % Play with colors
+
+
+\usepackage{caption}
+\usepackage{booktabs}
+
+\usepackage{minted}
+
+
+
+
+
+
+
+
+
