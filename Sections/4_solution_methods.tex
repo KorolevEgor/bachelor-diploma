@@ -8,8 +8,8 @@
     \item $features_4:$ [кривизна, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$];
     \item $features_5:$ [кривизна, профиль пути, скорость $\cdot$ загрузка];
     \item $features_6:$ [кривизна, профиль пути, скорость $\cdot$ загрузка,\\ $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$];
-    \item $features_6:$ [кривизна, скорость $\cdot$ загрузка, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$];
-    \item $features_6:$ [скорость $\cdot$ загрузка, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$].
+    \item $features_7:$ [кривизна, скорость $\cdot$ загрузка, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$];
+    \item $features_8:$ [скорость $\cdot$ загрузка, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$].
     \newline
 \end{enumerate}
 Также в каждый $features_i$ добавим признак $Intercept$, равный единице.
@@ -21,132 +21,218 @@
     \item $\lambda_3(\theta, x) = \sqrt{|5^2 - ((\theta \cdot x) - 5)^2|} + 1$;
     \item $\lambda_4(\theta, x) = ((\theta \cdot x) - 1)^2$;
     \item $\lambda_5(\theta, x) = \frac{1}{1 + (\theta \cdot x)^2}$;
-    \item $\lambda_6(\theta, x) = (\theta \cdot x) (\frac{\pi}{2} - \arctan(\theta \cdot x)) + 1$;
+    \item $\lambda_6(\theta, x) = (\theta \cdot x) (\frac{\pi}{2} + \arctan(\theta \cdot x)) + 1$;
     \item $\lambda_7(\theta, x) = \log(1 + (\theta \cdot x)^2) + 1$.
 \end{enumerate}
 
 В качестве оптимизационного метода был выбран метод глобальной оптимизации shgo (Simplicial Homology Global Optimisation), реализованный в модуле scipy.optimize. В качестве граничного множества для искомых параметров был взят гиперкуб со стороной $2000$ и центром в начале координат (т.е. $-1000 \leq \theta_i \leq 1000~~i = \overline{1,N}$).
 
-\begin{table}[H]
-\begin{center}
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|l|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        $\ln L(\theta, x, y)$ & -265.06 & -214.66 & -214.66 & -265.18 & -214.66 & -265.05 & -264.67 \\ \hline
-        оптимальное $\hat{\theta}$ & [1.18, -271.63] & [-2.74e-11,  0] & [0, 0] & [-0.79, 208.15] & [-2.74e-11,  0] & [0.95, -236.29] & [2.66, -549.73] \\ \hline
-    \end{tabular}
-}
-\captionof{table}{модели с признаковым пространством $features_1$ и $\{\lambda_i\}_{i=1}^7$}
-\label{tab:features_1}
-\end{center}
-\end{table}
 
+\newcommand{\lambdasTab}{$\lambda_i$}
+\newcommand{\criteriaTab}{$AIC_c$}
+\newcommand{\paramsTab}{$\hat{\theta}$}
+\newcommand{\lenFirstColumnTab}{1.4cm}
 \begin{table}[H]
 \begin{center}
 \resizebox{\textwidth}{!}{%
-    \begin{tabular}{|l|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
         \hline
-        & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        $\ln L(\theta, x, y)$ & -275.19 & -217.87 & -278.53 & -278.01 & -217.87 & -279.56 & -282.51 \\ \hline
-        оптимальное $\hat{\theta}$ & [1.17, -160.85, 39.29] & [-2.74e-11,  0,  0] & [0.55, -112.99, 35.68] & [-0.83, 212.69, -56.93] & [-2.74e-11, 0, 0] & [1.05, -281.75, 83.44] & [3.28, 486.79, 276.36] \\ \hline
+        \multicolumn{8}{|c|}{модели с признаковым пространством $features_1$} \\ \hline
+        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
+        \criteriaTab & 532.43 & 633.21 & 633.21 & 532.17 & 633.21 & 532.45 & 533.21 \\ \hline
+        \paramsTab & [1.18, -271.63] & [-2.74e-11,  0] & [0, 0] & [-0.79, 208.15] & [-2.74e-11,  0] & [0.95, -236.29] & [2.66, -549.73] \\ \hline
+        \multicolumn{8}{l}{} \\
     \end{tabular}
 }
-\captionof{table}{модели с признаковым пространством $features_2$ и $\{\lambda_i\}_{i=1}^7$}
-\label{tab:features_2}
-\end{center}
-\end{table}
 
-\begin{table}[H]
-\begin{center}
 \resizebox{\textwidth}{!}{%
-    \begin{tabular}{|l|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
         \hline
-        & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        $\ln L(\theta, x, y)$ & -288.09 & -221.87 & -292.14 & -291.62 & -221.87 & -294.55 & -296.63 \\ \hline
-        оптимальное $\hat{\theta}$ & [1.29, -201.69, 0.82] & [-2.73e-11, 0, 0] & [0.84, -77.66, 1,76] & [-0.94, 280.75, -1.44] & [-2.73e-11, 0, 0] & [1.21, -426.41, 2.49] & [3.91, -1000, 7.26] \\ \hline
+        \multicolumn{8}{|c|}{модели с признаковым пространством $features_2$} \\ \hline
+        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
+        \criteriaTab & 505.62 & 620.24 & 498.94 & 499.96 & 620.24 & 496.86 & 490.94 \\ \hline
+        \paramsTab & [1.17, -160.85, 39.29] & [-2.74e-11,  0,  0] & [0.55, -112.99, 35.68] & [-0.83, 212.69, -56.93] & [-2.74e-11, 0, 0] & [1.05, -281.75, 83.44] & [3.28, 486.79, 276.36] \\ \hline
+        \multicolumn{8}{l}{} \\
     \end{tabular}
 }
-\captionof{table}{модели с признаковым пространством $features_3$ и $\{\lambda_i\}_{i=1}^7$}
-\label{tab:features_3}
-\end{center}
-\end{table}
 
-\begin{table}[H]
-\begin{center}
 \resizebox{\textwidth}{!}{%
-    \begin{tabular}{|l|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
         \hline
-        & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        $\ln L(\theta, x, y)$ & -299.41 & -218.66 & -285.78 & -302.24 & -218.66 & -302.26 & -294.19 \\ \hline
-        оптимальное $\hat{\theta}$ & [2.11, -180.43, -2.36] & [-2.73e-11, 0, 0] & [2.5, 12.81, -2.69] & [-1.7, 207.42, 1.96] & [-2.74e-11, 0, 0] & [2.19, -302.65, -2.53] & [5.94, -74.64,  -6.39] \\ \hline
+        \multicolumn{8}{|c|}{модели с признаковым пространством $features_3$} \\ \hline
+        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
+        \criteriaTab & 480.42 & 612.88 & 472.04 & 473.38 & 612.88 & 467.52 & 463.36 \\ \hline
+        \paramsTab & [1.29, -201.69, 0.82] & [-2.73e-11, 0, 0] & [0.84, -77.66, 1,76] & [-0.94, 280.75, -1.44] & [-2.73e-11, 0, 0] & [1.21, -426.41, 2.49] & [3.91, -1000, 7.26] \\ \hline
+        \multicolumn{8}{l}{} \\
     \end{tabular}
 }
-\captionof{table}{модели с признаковым пространством $features_4$ и $\{\lambda_i\}_{i=1}^7$}
-\label{tab:features_4}
-\end{center}
-\end{table}
 
-\begin{table}[H]
-\begin{center}
 \resizebox{\textwidth}{!}{%
-    \begin{tabular}{|l|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
         \hline
-        & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        $\ln L(\theta, x, y)$ & -269.8 & -205.86 & -205.86 & -275.13 & -205.86 & -275.88 & -271.82 \\ \hline
-        оптимальное $\hat{\theta}$ & [-9.41e-2, -237.25, 2.52e-2] & [-7.05e-14, 0, -2e-10] & [0, 0, 0] & [0.44, 216.05, -2.59e-2] & [-7.04e-14, 0, -2e-10] & [-0.64, -262.77, 3.45e-2] & [0.39, -431.93, 7.33e-2] \\ \hline
+        \multicolumn{8}{|c|}{модели с признаковым пространством $features_4$} \\ \hline
+        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
+        \criteriaTab & 464.18 & 625.68 & 487.86 & 458.54 & 625.68 & 458.5 & 474.62 \\ \hline
+        \paramsTab & [2.11, -180.43, -2.36] & [-2.73e-11, 0, 0] & [2.5, 12.81, -2.69] & [-1.7, 207.42, 1.96] & [-2.74e-11, 0, 0] & [2.19, -302.65, -2.53] & [5.94, -74.64,  -6.39] \\ \hline
+        \multicolumn{8}{l}{} \\
     \end{tabular}
 }
-\captionof{table}{модели с признаковым пространством $features_5$ и $\{\lambda_i\}_{i=1}^7$}
-\label{tab:features_5}
-\end{center}
-\end{table}
 
-\begin{table}[H]
-\begin{center}
 \resizebox{\textwidth}{!}{%
-    \begin{tabular}{|l|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
         \hline
-        & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        $\ln L(\theta, x, y)$ & -279.01 & -209.07 & -244.83 & -282.9 & -209.07 & -283.88 & -278.48 \\ \hline
-        оптимальное $\hat{\theta}$ & [-0.15, -148.04, 53.13, 2.67e-2] & [-7.09e-14, 0, 0, -2.01e-10] & [9.29, 3.4, 2.58, -0.11] & [0.29, 244.79, -52.47, -2.44e-2] & [-7.07e-14, 0, 0, -2e-10] & [-0.47, -328.74, 75.88, 3.27e-2] & [-0.34, -633.81, 7.19, 8.24e-2] \\ \hline
+        \multicolumn{8}{|c|}{модели с признаковым пространством $features_5$} \\ \hline
+        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
+        \criteriaTab & 472.2 & 600.08 & 600.08 & 461.54 & 600.08 & 460.02 & 468.16 \\ \hline
+        \paramsTab & [-9.41e-2, -237.25, 2.52e-2] & [-7.05e-14, 0, -2e-10] & [0, 0, 0] & [0.44, 216.05, -2.59e-2] & [-7.04e-14, 0, -2e-10] & [-0.64, -262.77, 3.45e-2] & [0.39, -431.93, 7.33e-2] \\ \hline
+        \multicolumn{8}{l}{} \\
     \end{tabular}
 }
-\captionof{table}{модели с признаковым пространством $features_6$ и $\{\lambda_i\}_{i=1}^7$}
-\label{tab:features_6}
-\end{center}
-\end{table}
 
-\begin{table}[H]
-\begin{center}
 \resizebox{\textwidth}{!}{%
-    \begin{tabular}{|l|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
         \hline
-        & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        $\ln L(\theta, x, y)$ & -298.1 & -211.07 & -211.07 & -297.41 & -211.07 & -297.51 & -293.38 \\ \hline
-        оптимальное $\hat{\theta}$ & [0.92, -105.35, 34.34, 2.12e-02, -2.24] & [-6.99e-14, 0, 0, -2.01e-10, 0] & [0, 0, 0, 0, 0] & [-0.98, 242.26, -26.21, -1.3e-2, 1.73] & [-7e-14, 0, 0, -2.01e-10, 0] & [1.28, -373.54, 41.1, 1.69e-2, -2.34] & [2.69, -57.95, 235.45, 7.89e-2, -8.15] \\ \hline
+        \multicolumn{8}{|c|}{модели с признаковым пространством $features_6$} \\ \hline
+        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
+        \criteriaTab & 447.38 & 587.28 & 516.02 & 439.6 & 587.28 & 437.66 & 448.44 \\ \hline
+        \paramsTab & [-0.15, -148.04, 53.13, 2.67e-2] & [-7.09e-14, 0, 0, -2.01e-10] & [9.29, 3.4, 2.58, -0.11] & [0.29, 244.79, -52.47, -2.44e-2] & [-7.07e-14, 0, 0, -2e-10] & [-0.47, -328.74, 75.88, 3.27e-2] & [-0.34, -633.81, 7.19, 8.24e-2] \\ \hline
+        \multicolumn{8}{l}{} \\
     \end{tabular}
 }
-\captionof{table}{модели с признаковым пространством $features_7$ и $\{\lambda_i\}_{i=1}^7$}
-\label{tab:features_7}
-\end{center}
-\end{table}
 
-\begin{table}[H]
-\begin{center}
 \resizebox{\textwidth}{!}{%
-    \begin{tabular}{|l|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
         \hline
-        & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        $\ln L(\theta, x, y)$ & -291.44 & -209.07 & -209.07 & -286.98 & -209.07 & -286.95 & -287.2 \\ \hline
-        оптимальное $\hat{\theta}$ & [0.55,  39.28, 2.54e-2, -2.14] & [-7.08e-14, 0, -2.01e-10, 0] & [0, 0, 0, 0] & [-0.49, -15.96, -1.7e-2, 1.44] & [-7.04e-14, 0, -2e-10, 0] & [0.31, 26.23, 2.7e-2, -1.97] & [1.91, 281.51, 7.62e-2, -6.9] \\ \hline
+        \multicolumn{8}{|c|}{модели с признаковым пространством $features_7$} \\ \hline
+        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
+        \criteriaTab & 409.6 & 583.68 & 583.68 & 411.0 & 583.68 & 410.8 & 419.06 \\ \hline
+        \paramsTab & [0.92, -105.35, 34.34, 2.12e-02, -2.24] & [-6.99e-14, 0, 0, -2.01e-10, 0] & [0, 0, 0, 0, 0] & [-0.98, 242.26, -26.21, -1.3e-2, 1.73] & [-7e-14, 0, 0, -2.01e-10, 0] & [1.28, -373.54, 41.1, 1.69e-2, -2.34] & [2.69, -57.95, 235.45, 7.89e-2, -8.15] \\ \hline
+        \multicolumn{8}{l}{} \\
     \end{tabular}
 }
-\captionof{table}{модели с признаковым пространством $features_8$ и $\{\lambda_i\}_{i=1}^7$}
-\label{tab:features_8}
+
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+        \hline
+        \multicolumn{8}{|c|}{модели с признаковым пространством $features_8$} \\ \hline
+        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
+        \criteriaTab & 422.54 & 587.28 & 587.28 & 431.46 & 587.28 & 431.52 & 431.02 \\ \hline
+        \paramsTab & [0.55,  39.28, 2.54e-2, -2.14] & [-7.08e-14, 0, -2.01e-10, 0] & [0, 0, 0, 0] & [-0.49, -15.96, -1.7e-2, 1.44] & [-7.04e-14, 0, -2e-10, 0] & [0.31, 26.23, 2.7e-2, -1.97] & [1.91, 281.51, 7.62e-2, -6.9] \\ \hline
+        \multicolumn{8}{l}{} \\
+    \end{tabular}
+}
+\captionof{table}{модели Пуассоновской регрессии с признаковыми пространствами $\{features_i\}_{i=1}^8$ и $\{\lambda_i\}_{i=1}^7$}
+\label{tab:poisson_tab}
 \end{center}
 \end{table}
 
 
 
 \section{Геометрическая регрессия}
+
+Признаковые пространства те же самые.\\
+
+Набор функций $p$:\\
+\begin{enumerate}[label=\arabic*.]
+    \item $p_1(\theta, x) = e^{(\theta \cdot x)}$;
+    \item $p_2(\theta, x) = e^{-(\theta \cdot x)^2}$;
+    \item $p_3(\theta, x) = \frac{1}{1+e^{-(\theta \cdot x)}}$;
+    \item $p_4(\theta, x) = \frac{1}{1 + (\theta \cdot x)^2}$;
+    \item $p_5(\theta, x) = (\theta \cdot x) (\frac{\pi}{2} + \arctan(\theta \cdot x)) + 1$.
+\end{enumerate}
+
+\newcommand{\pGeomTab}{$p_i$}
+\begin{table}[H]
+%\begin{center}
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+        \hline
+        \multicolumn{6}{|c|}{модели с признаковым пространством $features_1$} \\ \hline
+        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
+        \criteriaTab & 216.03 & 216.27 & 216.31 & 215.97 & 215.91 \\ \hline
+        \paramsTab & [-1.46, 215.57] & [1.20, -90.37] & [-1.18, 278.32] & [-1.82, 233.20] & [-0.95, 150.96] \\ \hline
+        \multicolumn{6}{l}{} \\
+    \end{tabular}
+}
+
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+        \hline
+        \multicolumn{6}{|c|}{модели с признаковым пространством $features_2$} \\ \hline
+        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
+        \criteriaTab & 195.58 & 199.32 & 199.38 & 192.44 & 194.38 \\ \hline
+        \paramsTab & [-1.53, 266.51, -81.67] & [1.23, -128.08, 33.41] & [-1.27, 388.34, -103.97] & [-1.97, 392.24, -123.78] & [-0.96, 123.77, -69.61] \\ \hline
+        \multicolumn{6}{l}{} \\
+    \end{tabular}
+}
+
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+        \hline
+        \multicolumn{6}{|c|}{модели с признаковым пространством $features_3$} \\ \hline
+        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
+        \criteriaTab & 184.68 & 187.6 & 187.3 & 179.64 & 183.42 \\ \hline
+        \paramsTab & [-1.56, 262.87, -2.05] & [-1.26, 171.59, -0.90] & [-1.40, 560.12, -3.07] & [-2.05, 523.11, -3.38] & [-1.00, 145.31, -1.55] \\ \hline
+        \multicolumn{6}{l}{} \\
+    \end{tabular}
+}
+
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+        \hline
+        \multicolumn{6}{|c|}{модели с признаковым пространством $features_4$} \\ \hline
+        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
+        \criteriaTab & 191.26 & 190.06 & 190.4 & 188.46 & 319.58 \\ \hline
+        \paramsTab & [-2.13, 130.97, 1.45] & [-1.57, 111.19, 0.86] & [-2.35, 342.71, 2.72] & [2.75, -255.76, -1.99] & [-7.83, 18.39, 8.09] \\ \hline
+        \multicolumn{6}{l}{} \\
+    \end{tabular}
+}
+
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+        \hline
+        \multicolumn{6}{|c|}{модели с признаковым пространством $features_5$} \\ \hline
+        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
+        \criteriaTab & 184.82 & 187.24 & 187.64 & 182.7 & 317.92 \\ \hline
+        \paramsTab & [0.03, 135.37, -0.03] & [0.58, -111.52, 0.01] & [0.80, 332.44, -0.04] & [-0.39, 279.17, -0.03] & [-7.80, 789.67, 0.09] \\ \hline
+        \multicolumn{6}{l}{} \\
+    \end{tabular}
+}
+
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+        \hline
+        \multicolumn{6}{|c|}{модели с признаковым пространством $features_6$} \\ \hline
+        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
+        \criteriaTab & 183.2 & 182.04 & 176.18 & 176.8 & 231.56 \\ \hline
+        \paramsTab & [-1.60, 509.87, -47.91, -0.01] & [0.97, -838.86, -93.59, 3.86e-3] & [0.39, 439.49, -89.75, -0.03] & [1.46, 193.16, -225.72, -0.07] & [-4.46, 263.73, -36.07, 0.05] \\ \hline
+        \multicolumn{6}{l}{} \\
+    \end{tabular}
+}
+
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+        \hline
+        \multicolumn{6}{|c|}{модели с признаковым пространством $features_7$} \\ \hline
+        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
+        \criteriaTab & 172.26 & 186.6 & 167.5 & 163.26 & 170.04 \\ \hline
+        \paramsTab & [-3.37, 295.38, -57.78, 0.02, 1.87] & [-0.26, 28.20, -52.39, -0.03, 1.69] & [-1.45, 455.99, -52.52, -0.01, 2.32] & [-0.68, 89.68, -113.06, -0.05, 3.31] & [-1.27, 41.87, -3.68, -3.22e-3, 1.24] \\ \hline
+        \multicolumn{6}{l}{} \\
+    \end{tabular}
+}
+
+\resizebox{\textwidth}{!}{%
+    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
+        \hline
+        \multicolumn{6}{|c|}{модели с признаковым пространством $features_8$} \\ \hline
+        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
+        \criteriaTab & 586.92 & 189.64 & 176.12 & 173.78 & 177.64 \\ \hline
+        \paramsTab & [3.97, -388.56, -0.13, -13.95] & [0.18, 49.54, 0.03, -1.64] & [-0.59, -15.12, -0.02, 1.88] & [-1.73, 36.23, 0.08, -1.76] & [-0.78, 2.12, -0.01, 0.85] \\ \hline
+        \multicolumn{6}{l}{} \\
+    \end{tabular}
+}
+\captionof{table}{модели Геометрической регрессии с признаковыми пространствами $\{features_i\}_{i=1}^8$ и $\{p_i\}_{i=1}^5$}
+\label{tab:geometry_tab}
+%\end{center}
+\end{table}
+
