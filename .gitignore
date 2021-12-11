@@ -8,6 +8,11 @@
 *.lot
 *.lol
 *.lof
+*.snm
+*.out
+*.nav
 
 _minted-Diploma
 .ipynb_checkpoints
+
+data.xlsx

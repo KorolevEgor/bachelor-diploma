@@ -1,0 +1,165 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage{cmap}
+\usepackage{xfrac}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+
+\usetheme{Berlin}
+
+\title[Моделирование количества сошедших вагонов]{Моделирование количества подвижных единиц грузового поезда в сходе с рельсов на основе метода максимального правдоподобия}
+\author[Е.В.Королёв \and А.Н.Игнатов]{Работу выполнил: Королёв Егор Владимирович, студент группы М8О-401Б-18 \and Научный руководитель: Игнатов Алексей Николаевич}
+\institute[НИУ МАИ]{Московский авиационный институт (НИУ)}
+
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\definecolor{myBlue}{RGB}{0, 128, 0}
+\definecolor{myGreen}{RGB}{1, 4, 255}
+
+\begin{document}
+    \begin{frame}
+        \maketitle
+    \end{frame}
+
+
+    \section{Введение}
+    \begin{frame}{Введение}
+        \begin{block}{Прогресс написания ВКР}
+            \begin{enumerate}
+                \item написано \_\_ страниц;
+                \item приведен предварительный анализ данных;
+                \item построено 96 регрессионных моделей;
+                \item написана программная реализация ММП;
+            \end{enumerate}
+        \end{block}
+    \end{frame}
+
+    
+    \begin{frame}{Введение}
+        \begin{block}{}
+            В странах с большой Ж/Д сетью и большим потоком перемещения поездов существует проблема схода составов с рельс. Последствия схода могут привести к экологическим, экономическим и логистическим проблемам.
+        \end{block}
+    
+        \begin{block}{}
+            Согласно \cite{Ignatov:functional_dependence} за период с 2013 г. по 2016 г. в РФ имеется 262 протокола сходов с рельс вагонов как в грузовых поездах, так и в пассажирских, без учета количества крушений. Соответственно, в среднем происходит 1 авария каждые 4 дня. Поэтому проблема представляет интерес для железнодорожных компаний.
+        \end{block}
+    \end{frame}
+
+
+    \section{Предварительный анализ данных}
+    \begin{frame}{Описание признаков}
+        \centering
+        \includegraphics[width=0.8\linewidth]{src/train.png}
+    \end{frame}
+
+
+    \begin{frame}{Описание признаков}
+        \begin{block}{Разреженность данных}
+            \begin{itemize}
+                \item Мощность выборки $n = 56$;
+                \item признак 'Режим движения' имеет $23$ пропусков ($41\%$);
+                \item признак 'Профиль пути' имеет $12$ пропусков ($21\%$);
+                \item признак 'Кривизна' имеет $10$ пропусков ($17\%$);
+            \end{itemize}
+        \end{block}
+    \end{frame}
+
+
+    \begin{frame}{Корреляция признаков}
+        \centering
+        \includegraphics[width=1.3\textheight]{src/corr_plot.png}
+    \end{frame}
+
+
+    \begin{frame}{Конструирование признаков}
+        \begin{block}{Введение новых признаков}
+            \begin{itemize}
+                \item $f_1 = $ профиль пути $\cdot$ макс. число вагонов в сходе;
+                \item $f_2 = 1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$;
+                \item $f_3 = $ скорость $\cdot$ загрузка;
+            \end{itemize}
+        \end{block}
+    
+        \begin{center}
+            \begin{tabular}{|l|c|c|c|c|}
+                \hline
+                & target & $f_1$ & $f_2$ & $f_3$ \\ \hline
+                target & 1.0       & 0.101375  & -0.286535 & 0.198847  \\ \hline
+                $f_1$  & 0.101375  & 1.0       & -0.086693 & -0.228508 \\ \hline
+                $f_2$  & -0.286535 & -0.086693 & 1.0       & -0.124420 \\ \hline
+                $f_3$  & 0.198847  & -0.228508 & -0.124420 & 1.0       \\ \hline
+            \end{tabular}
+        \end{center}
+    \end{frame}
+
+
+    \begin{frame}{Оценка функции вероятности $P(\xi = x)$}
+        \centering
+        \includegraphics[width=1.3\textheight]{src/KDE.png}
+    \end{frame}
+
+
+    \section{Построение моделей}
+    \begin{frame}{Пуассоновская регрессия}
+        \begin{block}{Функция правдоподобия}
+            $$L(\theta | X, y) = \prod\limits_{i=1}^{n} \dfrac{e^{-\lambda(x_i, \theta)} \lambda^{y_i}(x_i, \theta)}{y_i!}$$
+        \end{block}
+    \end{frame}
+
+
+    \begin{frame}{Геометрическая регрессия}
+        \begin{block}{Функция правдоподобия}
+            $$L(\theta | X, y) = \prod\limits_{i = 1}^n (1-p(x_i,\theta))^{y_i}p(x_i,\theta)$$
+        \end{block}        
+    \end{frame}
+
+
+    \begin{frame}{Программная реализация}
+        \begin{block}{Конструктор класса}
+            \textcolor{myGreen}{def} \textcolor{myBlue}{MLM}(neg\_log\_likelihood\_fun,\\
+            \begin{tabular}{p{1cm}l}
+                & const\_log\_likelihood\_fun,\\
+                & optimization\_method,\\
+                & borders, predict\_fun,\\
+                & count\_of\_param\_fun,\\
+                & features, target, df)
+            \end{tabular}
+        \end{block}
+    \end{frame}
+
+    
+    \section{Численный эксперимент}
+    \begin{frame}{Численный эксперимент}
+        \begin{block}{Пуассоновская регрессия}
+            
+        \end{block}
+    
+        \begin{block}{Геометрическая регрессия}
+            
+        \end{block}
+    \end{frame}
+
+
+    \section{Заключение}
+    \begin{frame}{Выводы}
+        \begin{block}{}
+            В данной работе были построены предсказательные модели числа сошедших вагонов. Глобально их можно разделить на 2 класса: модели Пуассоновской регрессии и модели геометрической регрессии. Для каждого класса были рассмотрены различные параметрические виды и признаковые пространства.
+        \end{block}
+    \end{frame}
+
+    \begin{frame}{Список литературы}
+        \begin{thebibliography}{00}
+            \bibitem{Ignatov:functional_dependence} Замышляев А.М., Игнатов А.Н., Кибзун А.И., Новожилов Е.О. Функциональная зависимость между количеством вагонов в сходе из-за неисправностей вагонов или пути и факторами движения // Надежность. 2018. Т. 18, № 1. С….. DOI: 10.21683/1729-2646-2018-18-1…
+        \end{thebibliography}
+     \end{frame}
+    
+    \begin{frame}{}
+        \centering
+        \Huge
+        Спасибо за внимание!
+    \end{frame}
+
+\end{document}
+
