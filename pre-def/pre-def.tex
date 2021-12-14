@@ -11,7 +11,7 @@
 \usetheme{Berlin}
 
 \title[Моделирование количества сошедших вагонов]{Моделирование количества подвижных единиц грузового поезда в сходе с рельсов на основе метода максимального правдоподобия}
-\author[Е.В.Королёв \and А.Н.Игнатов]{Работу выполнил: Королёв Егор Владимирович, студент группы М8О-401Б-18 \and Научный руководитель: Игнатов Алексей Николаевич}
+\author[Е.В.Королёв \and А.Н.Игнатов]{Работу выполнил: Королёв Егор Владимирович, студент группы М8О-401Б-18 \and Научный руководитель: Игнатов Алексей Николаевич, к.ф.-м.н., доцент}
 \institute[НИУ МАИ]{Московский авиационный институт (НИУ)}
 
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
@@ -28,7 +28,7 @@
     \begin{frame}{Введение}
         \begin{block}{Прогресс написания ВКР}
             \begin{enumerate}
-                \item написано \_\_ страниц;
+                \item написано 50 страниц;
                 \item приведен предварительный анализ данных;
                 \item построено 96 регрессионных моделей;
                 \item написана программная реализация ММП;
@@ -38,12 +38,12 @@
 
     
     \begin{frame}{Введение}
-        \begin{block}{}
-            В странах с большой Ж/Д сетью и большим потоком перемещения поездов существует проблема схода составов с рельс. Последствия схода могут привести к экологическим, экономическим и логистическим проблемам.
+        \begin{block}{Проблема}
+            В странах с большой ж/д сетью и большим потоком перемещения поездов существует проблема схода составов с рельс. Последствия схода могут привести к экологическим, экономическим и логистическим проблемам. В РФ в среднем происходит 1 авария каждые 4 дня. Поэтому проблема представляет интерес для железнодорожных компаний.
         \end{block}
     
-        \begin{block}{}
-            Согласно \cite{Ignatov:functional_dependence} за период с 2013 г. по 2016 г. в РФ имеется 262 протокола сходов с рельс вагонов как в грузовых поездах, так и в пассажирских, без учета количества крушений. Соответственно, в среднем происходит 1 авария каждые 4 дня. Поэтому проблема представляет интерес для железнодорожных компаний.
+        \begin{block}{Задача}
+            Для заданного набора данных необходимо построить предсказательную модель количества сошедших подвижных единиц в составе.
         \end{block}
     \end{frame}
 
@@ -58,7 +58,7 @@
     \begin{frame}{Описание признаков}
         \begin{block}{Разреженность данных}
             \begin{itemize}
-                \item Мощность выборки $n = 56$;
+                \item мощность выборки $n = 56$;
                 \item признак 'Режим движения' имеет $23$ пропусков ($41\%$);
                 \item признак 'Профиль пути' имеет $12$ пропусков ($21\%$);
                 \item признак 'Кривизна' имеет $10$ пропусков ($17\%$);
@@ -101,43 +101,95 @@
     \end{frame}
 
 
-    \section{Построение моделей}
+    \section{Построение моделей}    
     \begin{frame}{Пуассоновская регрессия}
-        \begin{block}{Функция правдоподобия}
-            $$L(\theta | X, y) = \prod\limits_{i=1}^{n} \dfrac{e^{-\lambda(x_i, \theta)} \lambda^{y_i}(x_i, \theta)}{y_i!}$$
+        \begin{block}{Функция вероятности}
+            $$P(\xi = k) = \dfrac{\lambda^k}{k!}e^{-\lambda}$$
         \end{block}
+        
+        \begin{block}{Функция логарифмического правдоподобия}
+            $$\log(L(\theta, x, y)) = \sum\limits_{i=1}^{n} \left( -\lambda(x_i, \theta) + y_i \ln(\lambda(x_i, \theta)) - \ln(y_i!) \right)$$
+        \end{block}
+    \end{frame}
+
+
+    \begin{frame}{Определение функций $\lambda(\theta, x)$}
+        \begin{enumerate}
+            \item $\lambda_1(\theta, x) = e^{(\theta \cdot x)}$;
+            \item $\lambda_2(\theta, x) = e^{-(\theta \cdot x)^2}$;
+            \item $\lambda_3(\theta, x) = \sqrt{|5^2 - ((\theta \cdot x) - 5)^2|} + 1$;
+            \item $\lambda_4(\theta, x) = ((\theta \cdot x) - 1)^2$;
+            \item $\lambda_5(\theta, x) = \frac{1}{1 + (\theta \cdot x)^2}$;
+            \item $\lambda_6(\theta, x) = (\theta \cdot x) (\frac{\pi}{2} + \arctan(\theta \cdot x)) + 1$;
+            \item $\lambda_7(\theta, x) = \log(1 + (\theta \cdot x)^2) + 1$.
+        \end{enumerate}
     \end{frame}
 
 
     \begin{frame}{Геометрическая регрессия}
-        \begin{block}{Функция правдоподобия}
-            $$L(\theta | X, y) = \prod\limits_{i = 1}^n (1-p(x_i,\theta))^{y_i}p(x_i,\theta)$$
+        \begin{block}{Функция вероятности}
+            $$P(\xi = k) = (1-p)^k p$$
+        \end{block}
+        
+        \begin{block}{Функция логарифмического правдоподобия}
+            $$\log(L(\theta, x, y)) = \sum\limits_{i = 1}^n ( y_i \ln(1 - p(x_i,\theta)) + \ln(p(x_i,\theta)) )$$
         \end{block}        
     \end{frame}
 
+    
+    \begin{frame}{Определение функций $p(\theta, x)$}
+        \begin{enumerate}
+            \item $p_1(\theta, x) = e^{(\theta \cdot x)}$;
+            \item $p_2(\theta, x) = e^{-(\theta \cdot x)^2}$;
+            \item $p_3(\theta, x) = \frac{1}{1+e^{-(\theta \cdot x)}}$;
+            \item $p_4(\theta, x) = \frac{1}{1 + (\theta \cdot x)^2}$;
+            \item $p_5(\theta, x) = (\theta \cdot x) (\frac{\pi}{2} + \arctan(\theta \cdot x)) + 1$.
+        \end{enumerate}
+    \end{frame}
 
-    \begin{frame}{Программная реализация}
-        \begin{block}{Конструктор класса}
-            \textcolor{myGreen}{def} \textcolor{myBlue}{MLM}(neg\_log\_likelihood\_fun,\\
-            \begin{tabular}{p{1cm}l}
-                & const\_log\_likelihood\_fun,\\
-                & optimization\_method,\\
-                & borders, predict\_fun,\\
-                & count\_of\_param\_fun,\\
-                & features, target, df)
-            \end{tabular}
-        \end{block}
+
+    \begin{frame}{Признаковые пространства}
+        \begin{enumerate}
+            \item $features_1:$ (кривизна);
+            \item $features_2:$ (кривизна, профиль пути);
+            \item $features_3:$ (кривизна, профиль пути $\cdot$ макс. число вагонов в сходе);
+            \item $features_4:$ (кривизна, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$);
+            \item $features_5:$ (кривизна, профиль пути, скорость $\cdot$ загрузка);
+            \item $features_6:$ (кривизна, профиль пути, скорость $\cdot$ загрузка,\\ $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$);
+            \item $features_7:$ (кривизна, скорость $\cdot$ загрузка, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$);
+            \item $features_8:$ (скорость $\cdot$ загрузка, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$).
+            \newline
+        \end{enumerate}
     \end{frame}
 
     
     \section{Численный эксперимент}
+    \begin{frame}{Программная реализация ММП}
+        \begin{block}{Конструктор класса}
+            \textcolor{myGreen}{def} \textcolor{myBlue}{MLM}(log\_likelihood\_fun,\\
+            \begin{tabular}{p{1cm}l}
+                & const\_log\_likelihood\_fun,\\
+                & optim\_method, borders,\\
+                & predict\_fun, param\_fun,\\
+                & features, target, df)
+            \end{tabular}
+        \end{block}
+    \end{frame}
+    
+    
     \begin{frame}{Численный эксперимент}
         \begin{block}{Пуассоновская регрессия}
-            
+            \begin{itemize}
+                \item наилучшая модель: $(\lambda_1, features_7)$. $AIC_c = 400.13,~~\hat\theta=(0.92, -105.35, 34.34, 0.02, -2.24)$;
+                \item диапазон значений: $AIC_c \sim 400.13 \div 617.6$;
+            \end{itemize}
         \end{block}
     
         \begin{block}{Геометрическая регрессия}
-            
+            \begin{itemize}
+                \item наилучшая модель: $(p_4, features_7)$. $AIC_c = 153.79,~~\hat\theta=(-0.68, 89.66, -113.05, -0.05, 3.31)$;
+                \item диапазон значений: $AIC_c \sim 153.79 \div 352.91$;
+            \end{itemize}
         \end{block}
     \end{frame}
 
