@@ -3,25 +3,27 @@
 
 \begin{document}
 
-%Дипломная работа: \pageref*{LastPage}~с., \totfig~рис., \tottab~табл...
+\chapter*{РЕФЕРАТ}
+\subfile{Sections/0_summary}
 
+\newpage
 \tableofcontents
 
 \newpage
 \likechapter{Введение}
 \subfile{Sections/1_introduction}
 
-\chapter{ОБЗОР ПРЕДМЕТНОЙ ОБЛАСТИ}
+\newpage
+\vspace*{\fill}
+\likechapter{Основная часть}
+\vspace*{\fill}
+
+\chapter{ТЕОРЕТИЧЕСКАЯ ЧАСТЬ}
 \subfile{Sections/2_overview_of_the_subject_area}
 
-\chapter{ПРЕДВАРИТЕЛЬНЫЙ АНАЛИЗ ДАННЫХ}
+\chapter{ПРАКТИЧЕСКАЯ ЧАСТЬ}
 \subfile{Sections/3_preliminary_data_analysis}
-
-\chapter{МЕТОДЫ РЕШЕНИЯ ЗАДАЧИ}
 \subfile{Sections/4_solution_methods}
-
-\chapter{СРАВНИТЕЛЬНЫЙ АНАЛИЗ}
-\subfile{Sections/5_comparative_analysis}
 
 \newpage
 \likechapter{Заключение}
@@ -30,10 +32,25 @@
 \newpage
 \subfile{Sections/7_bibliography}
 
-\newpage
-\listoffigures
-\newpage
-\listoftables
+%\newpage
+%\listoffigures
+%\newpage
+%\listoftables
 %\newpage
 %\listoflistings
+
+\newpage
+\likechapter{ПРИЛОЖЕНИЕ А}
+\subfile{Sections/addition_a}
+
+\newpage
+\likechapter{ПРИЛОЖЕНИЕ Б}
+\subfile{Sections/addition_b}
+
+
 \end{document}
+
+
+
+
+

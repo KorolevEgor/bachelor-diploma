@@ -1,0 +1,186 @@
+\textbf{Программная реализация метода максимального правдоподобия.}
+
+Для построения предсказательной модели использованы Пуассоновская и геометрическая регрессии. Оба метода в своей основе используют метод максимального правдоподобия. Именно поэтому был реализован общий класс для метода максимального правдоподобия. Сигнатура конструктора данного класса выглядит следующим образом:
+
+\begin{minted}[fontsize=\footnotesize]{python}
+    def MLM(log_likelihood_fun,
+        optimization_method,
+        borders, predict_fun,
+        count_of_param_fun,
+        features, target, df)
+\end{minted}
+где:
+\begin{description}[font=$\bullet$]
+    \item log\_likelihood\_fun -- функция логарифмического правдоподобия;
+    \item optimization\_method -- метод глобальной оптимизации;
+    \item borders -- границы поиска оптимальной точки;
+    \item predict\_fun -- функция предсказания целевой переменной по заданному объекту;
+    \item count\_of\_param\_fun -- количество параметризованных функций;
+    \item features -- вектор наборов названий признаков из признаковых пространств;
+    \item target -- название целевого признака;
+    \item df -- набор данных;
+\end{description}
+
+Таким образом, для построения регрессионной модели с заданным распределением целевой переменной достаточно определить функцию, вычисляющую логарифмическую функцию правдоподобия. Также можно переопределить функцию предсказания результата predict, либо воспользоваться готовой реализацией. Оставшиеся параметры в конструкторе класса не требуют от пользователя реализации функций.
+
+\section*{Листинг программны}
+
+\begin{minted}[fontsize=\footnotesize, linenos, breaklines, breakafter=d, frame=lines]{python}
+class MLM():
+    
+    log_likelihood_fun = 0
+    
+    predict_fun = None
+    
+    optimization_method = shgo
+    borders = 10 * [(-1000, 1000)]
+    
+    df = None
+    spaces = None
+    target = None
+    
+    count_of_param_fun = 0
+    
+    thetas_for_tex = []
+    AICs_c_for_tex = []
+    
+    
+    def __init__(self, df, spaces, target,
+            log_likelihood_fun,
+            optimization_method, borders, predict_fun,
+            count_of_param_fun):
+        self.log_likelihood_fun = log_likelihood_fun
+        self.optimization_method = optimization_method
+        self.borders = borders
+        self.predict_fun = predict_fun
+        self.count_of_param_fun = count_of_param_fun
+        self.spaces = spaces
+        self.target = target
+        self.df = df
+    
+    
+    def neg_log_likehood_fun(self, theta, X, y, lambda_index):
+        return -self.log_likelihood_fun(theta, X, y, lambda_index)
+    
+    
+    def calc_aic_c(self, logL, space) -> float:
+        k = len(space)
+        n = len(self.y)
+        eps = 1e-3
+        return round(2 * (k - logL) + 2 * k * (k + 1) / (n - k - 1 + eps), 2)
+    
+    
+    def round_and_format_params(self, a, is_tex_output=False):
+        if is_tex_output:
+            result_str = ''
+            for i in a:
+                result_str += ('$%.2f$, ' % i)
+                result_str = '[' + result_str[:-2] + ']'
+                return result_str
+        else:
+            result = []
+            for i in a:
+                result.append(round(i, 2))
+            return result
+    
+    
+    def print_tex(self):    
+        print('\\newcommand{\\lambdasTab}{$\\lambda_i$}')
+        print('\\newcommand{\\criteriaTab}{$AIC_c$}')
+        print('\\newcommand{\\paramsTab}{$\\hat{\\theta}$}')
+        print('\\newcommand{\\lenFirstColumnTab}{1.5cm}')
+        print('\\begin{center}\n')
+        space_ind = 0
+        for space in self.spaces:
+            space_ind += 1
+            data = self.df[space + self.target].dropna()
+            self.y = np.array(data[self.target])
+            
+            lambdas_str = ''
+            for i in range(self.count_of_param_fun):
+                lambdas_str += ' & $\\lambda_' + str(i + 1) + '$'
+            
+            print('\\resizebox{\\textwidth}{!}{')
+            print('\t\\begin{tabular}{|p{\\lenFirstColumnTab}||' + 'p{4cm}|'*(self.count_of_param_fun) + '}')
+            
+            print('\t\t\\hline')
+            print('\t\t$n = ' + str(len(self.y)) + '$ & \\multicolumn{' + str(self.count_of_param_fun) + '}{c|}{модели с признаковым пространством $features_' + str(space_ind) + '$} \\\\ \\hline\\hline')
+            print('\t\t\\lambdasTab' + lambdas_str + ' \\\\ \\hline')
+            print('\t\t\\criteriaTab & ' + str(self.AICs_c_for_tex[space_ind-1]) + ' \\\\ \\hline')
+            print('\t\t\\paramsTab & ' + str(self.thetas_for_tex[space_ind-1]) + ' \\\\ \\hline')
+            
+            print('\t\\end{tabular}')
+            print('}\n')
+        print('\\end{center}')
+    
+    
+    def fit_one(self, space, link_fun_index):
+        count_of_attempt = 0
+        result = self.optimization_method(self.neg_log_likelihood_fun,
+        self.borders[:len(space)],
+        args=(self.X, self.y, link_fun_index))#, maxiter=1500)
+        
+        while count_of_attempt < 20 and math.isnan(result['fun']):
+            result = self.optimization_method(self.neg_log_likelihood_fun,
+            self.borders[:len(space)],
+            args=(self.X, self.y, link_fun_index))#, maxiter=1500)
+            count_of_attempt += 1
+            if count_of_attempt == 20:
+                print('count_of_attempt = 20')
+        
+        logL = round(-result['fun'], 2)
+        AIC_c = self.calc_aic_c(logL, space)
+        
+        return {
+            "status": result['success'],
+            "metrics": {
+                "logL": logL,
+                "AIC_c": AIC_c
+            },
+            "parameters": result['x']
+        }
+    
+    
+    def fit_all(self, get_tex_code=False):
+        space_ind = 0
+        results = []
+        self.thetas_for_tex = []
+        self.AICs_c_for_tex = []
+        for space in self.spaces:
+            space_ind += 1
+            
+            data = self.df[space + self.target].dropna()
+            self.y = data[self.target]
+            self.y = np.array(self.y)
+            self.X = data.drop(self.target, axis=1)
+            self.X = np.matrix(self.X)
+            
+            thetas_for_tex_line = ''
+            AICs_c_for_tex_line = ''
+            
+            print('Признаковое пространство', space_ind, ':', space)
+            print('Мощность выборки n = ', len(self.y))
+            
+            for link_fun_index in range(self.count_of_param_fun):
+            
+                result = self.fit_one(space, link_fun_index)
+                
+                if get_tex_code:
+                    thetas_for_tex_line += self.round_and_format_params(result['parameters'], is_tex_output=True) + ' & '
+                    AICs_c_for_tex_line += '$' + str(result['metrics']['AIC_c']) + '$' + ' & '
+                
+                result['parameters'] = self.round_and_format_params(result['parameters'])
+                results.append(result)
+                print(result)
+            
+            print()
+        
+            if get_tex_code:
+                self.thetas_for_tex.append(thetas_for_tex_line[:-3])
+                self.AICs_c_for_tex.append(AICs_c_for_tex_line[:-3])
+        if get_tex_code:
+            self.print_tex()
+\end{minted}
+
+
+

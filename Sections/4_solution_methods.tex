@@ -1,4 +1,9 @@
-\section{Признаковые пространства}
+\section{Методы решения задачи}
+
+В данной работе была написана программная реализация метода максимального правдоподобия, которая описана в приложении А. Также был написан программный комплекс, представляющий собой веб-сервис по работе с методом максимального правдоподобия, описан в приложении Б.
+
+
+\subsection{Признаковые пространства}
 
 Сформируем признаковые пространства для моделей, основанных как на Пуассоновской регрессии, так и на геометрической регрессии:
 
@@ -13,390 +18,150 @@
     \item $features_8:$ (скорость $\cdot$ загрузка, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$).
     \newline
 \end{enumerate}
-Также в каждый набор признаков добавим новый признак $Intercept$, реализация которого всегда равна единице. Данный признак необходим для появления свободного члена $\theta_0$ в результате скалярного произведения: $(\theta, x) = \theta_0 + \theta_1 x_1 + \theta_2 x_2 + \ldots + \theta_n x_n$, где $n+1$ -- размерность соответствующего признакового пространства.
+Также в каждый набор признаков добавим новый признак $Intercept$, реализация которого всегда равна единице. Данный признак необходим для появления свободного члена $\theta_0$ в результате скалярного произведения: $\left\langle \theta, x\right\rangle = \theta_0 + \theta_1 x_1 + \theta_2 x_2 + \ldots + \theta_n x_n$, где $n+1$ -- размерность соответствующего признакового пространства.
 
-Были добавлены новые признаки, такие как: профиль пути $\cdot$ макс. число вагонов в сходе, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$, скорость $\cdot$ загрузка. Вычислим коэффициенты корреляции новых признаков с целевой целевым признаком количество сшедших вагонов, а также вычислим коэффициенты корреляции между самими признаками (для удобства чтения таблицы сделаем соответствующие переименование признаков: target, $f_1$, $f_2$, $f_2$, $f_3$):
+Были добавлены новые признаки, такие как: профиль пути $\cdot$ макс. число вагонов в сходе, $1 - \frac{\text{макс. число вагонов в сходе}}{\text{общее кол-во вагонов}}$, скорость $\cdot$ загрузка. Вычислим коэффициенты корреляции новых признаков с целевой целевым признаком количество сошедших вагонов, а также вычислим коэффициенты корреляции между самими признаками (для удобства чтения таблицы сделаем соответствующие переименование признаков: target, $f_1$, $f_2$, $f_2$, $f_3$):
 
-\begin{center}
-\begin{tabular}{|l|c|c|c|c|}
-    \hline
-    & target & $f_1$ & $f_2$ & $f_3$ \\ \hline
-    target & 1.0       & 0.101375  & -0.286535 & 0.198847  \\ \hline
-    $f_1$  & 0.101375  & 1.0       & -0.086693 & -0.228508 \\ \hline
-    $f_2$  & -0.286535 & -0.086693 & 1.0       & -0.124420 \\ \hline
-    $f_3$  & 0.198847  & -0.228508 & -0.124420 & 1.0       \\ \hline
-\end{tabular}
-\captionof{table}{корреляция целевого признака с введеными}
-\label{tab:corr_new_features}
-\end{center}
+
+\begin{table}[H]
+    \captionof{table}{Корреляция целевого признака с введеными}
+    \label{tab:corr_new_features}
+    \begin{tabular}{|l|c|c|c|c|}
+        \hline
+        & target & $f_1$ & $f_2$ & $f_3$ \\ \hline
+        target & 1.0       & 0.101375  & -0.286535 & 0.198847  \\ \hline
+        $f_1$  & 0.101375  & 1.0       & -0.086693 & -0.228508 \\ \hline
+        $f_2$  & -0.286535 & -0.086693 & 1.0       & -0.124420 \\ \hline
+        $f_3$  & 0.198847  & -0.228508 & -0.124420 & 1.0       \\ \hline
+    \end{tabular}
+\end{table}
+
 
 Из таблицы видно, что признаки $f_1$ и $f_3$ имеют значительную величину корреляции между собой. При этом признак $f_2$ слабо коррелирует как с $f_1$, так и с $f_3$. Из этого следует, что в один набор признаков нежелательно включать $f_1$ и $f_3$ вместе.
 
 Также можно заметить, что признак $f_2$ сильно коррелирует с целевым признаком.
 
 
-\section{Программная реализация метода максимального правдоподобия}
-
-Для построения предсказательной модели будут использованы Пуассоновская и геометрическая регрессии. Оба метода в своей основе используют метод максимального правдоподобия. Именно поэтому был реализован общий класс для метода максимального правдоподобия. Сигнатура конструктора данного класса выглядит следующим образом:
-
-\begin{minted}[fontsize=\footnotesize]{python}
-def MLM(neg_log_likelihood_fun,
-        const_log_likelihood_fun,
-        optimization_method,
-        borders, predict_fun,
-        count_of_param_fun,
-        features, target, df)
-\end{minted}
-где:
-\begin{description}[font=$\bullet$]
-    \item log\_likelihood\_fun -- функция логарифмического правдоподобия;
-    \item const\_log\_likelihood\_fun -- необязательное числовое поле, используется когда из логарифмической функции правдоподобия можно выделить константу;
-    \item optimization\_method -- метод глобальной оптимизации;
-    \item borders -- границы поиска оптимальной точки;
-    \item predict\_fun -- функция предсказания целевой переменной по заданному объекту;
-    \item count\_of\_param\_fun -- количество параметризованных функций;
-    \item features -- вектор наборов названий признаков из признаковых пространств;
-    \item target -- название целевого признака;
-    \item df -- набор данных;
-\end{description}
-
-Таким образом, для построения регрессионной модели с заданным распределением целевой переменной достаточно определить функцию, вычисляющую логарифмическую функцию правдоподобия. Также можно переопределить функцию предсказания результата predict, либо воспользоваться готовой реализацией. Оставшиеся параметры в конструкторе класса не требуют от пользователя реализации функций.
-
-\begin{minted}[fontsize=\footnotesize, linenos, breaklines, breakafter=d, frame=lines]{python}
-class MLM():
-
-    neg_log_likelihood_fun = 0
-    const_log_likelihood_fun = 0
-    
-    predict_fun = None
-    
-    optimization_method = shgo
-    borders = 10 * [(-1000, 1000)]
-    
-    df = None
-    features = None
-    target = None
-    
-    count_of_param_fun = 0
-    
-    
-    def __init__(self, df, features, target,
-            neg_log_likelihood_fun, const_log_likelihood_fun,
-            optimization_method, borders, predict_fun,
-            count_of_param_fun):
-        self.neg_log_likelihood_fun = neg_log_likelihood_fun
-        self.const_log_likelihood_fun = const_log_likelihood_fun
-        self.optimization_method = optimization_method
-        self.borders = borders
-        self.predict_fun = predict_fun
-        self.count_of_param_fun = count_of_param_fun
-        self.features = features
-        self.target = target
-        self.df = df
-    
-    
-    def const_log_likehood_zero(y):
-        return 0
-    
-    
-    def calc_aic_c(self, logL, feature) -> float:
-        logL = float(logL[2:-2])
-        k = len(feature)
-        n = len(self.y)
-        return round(2 * (k - logL) + 2 * k * (k + 1) / (n - k - 1), 2)
-    
-    
-    def to_fixed2(self, a, is_tex_output=False):
-        result_str = ''
-        for i in a:
-            if is_tex_output:
-                result_str += ('$%.2f$, ' % i)
-            else:
-                result_str += ('%.2f, ' % i)
-        result_str = '[' + result_str[:-2] + ']'
-        return result_str
-    
-    
-    def fit_all(self, get_tex_code=False):
-        num_of_feature = 0
-        for feature in self.features:
-            num_of_feature += 1
-    
-            data = self.df[feature + self.target].dropna()
-            self.y = data[self.target]
-            self.y = np.array(self.y)
-            self.X = data.drop(self.target, axis=1)
-            self.X = np.matrix(self.X)
-            
-            thetas_for_tex = ''
-            thetas_without_round_for_tex = ''
-            AIC_c_for_tex = ''
-            
-            print('Признаковое пространство', num_of_feature, ':', feature)
-            print('Мощность выборки n = ', len(self.y))
-            
-            for param_index in range(self.count_of_param_fun):
-                count_of_attempt = 0
-                result = self.optimization_method(self.neg_log_likelihood_fun,
-                self.borders[:len(feature)],
-                args=(self.X, self.y, param_index))
-                
-                while math.isnan(result['fun']) and count_of_attempt < 15:
-                result = self.optimization_method(self.neg_log_likelihood_fun,
-                self.borders[:len(feature)],
-                args=(self.X, self.y, param_index))
-                count_of_attempt += 1
-                
-                if get_tex_code:
-                thetas_for_tex += self.to_fixed2(result['x'], is_tex_output=True) + ' & '
-                thetas_without_round_for_tex += str(result['x']) + ' & '
-                AIC_c_for_tex += '$' + str(self.calc_aic_c(self.to_fixed2([-result['fun'] + self.const_log_likelihood_fun(self.y)], is_tex_output=True), feature)) + '$' + ' & '
-                
-                print('success: ', result['success'])
-                print('ln L: ', self.to_fixed2([-result['fun'] + self.const_log_likelihood_fun(self.y)]))
-                print('AIC_c', self.calc_aic_c(self.to_fixed2([-result['fun'] + self.const_log_likelihood_fun(self.y)]), feature))
-                print('thetas: ', self.to_fixed2(result['x']))
-                print()
-                
-            if get_tex_code:
-                print('latex code:')
-                print('thetas_for_tex:', thetas_for_tex[:-2], '\n')
-                print('thetas_for_tex:', thetas_without_round_for_tex[:-2], '\n')
-                print('AIC_c_for_tex: ', AIC_c_for_tex[:-2], '\n')
-                print('#####################################################') 
-    
-    
-    # TO DO
-    def predict(self, x_pred):
-        return 0
-\end{minted}
 
 
-\section{Пуассоновская регрессия}
 
-Предположим, что количество сшедших вагонов имеет Пуассоновское распределение. Тогда функция вероятности $p(k) = \dfrac{\lambda^k}{k!}e^{-\lambda}$. Пусть плотность потока событий $\lambda = \lambda(\theta, x)$, где $\theta$ -- вектор параметров, $x$ -- вектор, описывающий объект. Выберем набор функций $\lambda$, параметризованных по $\theta$:
+\subsection{Пуассоновская регрессия}
+
+Предположим, что количество сошедших вагонов имеет Пуассоновское распределение. Тогда функция вероятности $p(k) = \dfrac{\lambda^k}{k!}e^{-\lambda}$. Пусть плотность потока событий $\lambda = \lambda(\theta, x)$, где $\theta$ -- вектор параметров, $x$ -- вектор, описывающий объект. Выберем набор функций $\lambda$, параметризованных по $\theta$:
 \begin{enumerate}[label=\arabic*.]
-    \item $\lambda_1(\theta, x) = e^{\theta, x}$;
-    \item $\lambda_2(\theta, x) = e^{-(\theta, x)^2}$;
-    \item $\lambda_3(\theta, x) = \sqrt{|5^2 - ((\theta, x) - 5)^2|} + 1$;
-    \item $\lambda_4(\theta, x) = ((\theta, x) - 1)^2$;
-    \item $\lambda_5(\theta, x) = \frac{1}{1 + (\theta, x)^2}$;
-    \item $\lambda_6(\theta, x) = (\theta, x) (\frac{\pi}{2} + \arctan(\theta, x)) + 1$;
-    \item $\lambda_7(\theta, x) = \log(1 + (\theta, x)^2) + 1$.
+    \item $\lambda_1(\theta, x) = e^{\left\langle \theta, x\right\rangle}$;
+    \item $\lambda_2(\theta, x) = e^{-[\left\langle \theta, x\right\rangle]^2}$;
+    \item $\lambda_3(\theta, x) = \sqrt{|5^2 - (\left\langle \theta, x\right\rangle - 5)^2|} + 1$;
+    \item $\lambda_4(\theta, x) = (\left\langle \theta, x\right\rangle - 1)^2$;
+    \item $\lambda_5(\theta, x) = \frac{1}{1 + (\left\langle \theta, x\right\rangle)^2}$;
+    \item $\lambda_6(\theta, x) = \left\langle \theta, x\right\rangle (\frac{\pi}{2} + \arctan(\left\langle \theta, x\right\rangle)) + 1$;
+    \item $\lambda_7(\theta, x) = \log(1 + (\left\langle \theta, x\right\rangle)^2) + 1$.
 \end{enumerate}
 
-В качестве оптимизационного метода был выбран топологический метод глобальной оптимизации SHGO (Simplicial Homology Global Optimisation), реализованный в модуле scipy.optimize. В качестве граничного множества для искомых параметров был взят гиперкуб со $стороной 2000$ и центром в начале координат (т.е$. -1000 \leq \theta_i \leq 1000~~i = \overline{0,n}$, где $n$ -- размерность соответствующего признакового пространства).
+В качестве оптимизационного метода был выбран топологический метод глобальной оптимизации SHGO (Simplicial Homology Global Optimisation), реализованный в модуле scipy.optimize. В качестве граничного множества для искомых параметров был взят гиперкуб со стороной $2000$ и центром в начале координат (т.е$. -1000 \leq \theta_i \leq 1000~~i = \overline{0,n}$, где $n$ -- размерность соответствующего признакового пространства).
 
-В главе 1 была получена функция логарифмического правдоподобия: $l = \sum\limits_{i=1}^{N} \left( -\lambda_i(x, \theta) + y_i \ln(\lambda_i(x, \theta)) - \ln(y_i!) \right)$. Программно реализовав данную функцию и запустив метод fit\_all у объекта класса MLM, были получены следующие результаты:
+Ранее была получена функция логарифмического правдоподобия: $l(\theta, x) = \sum\limits_{i=1}^{N} \left( -\lambda(\theta, x) + y_i \ln(\lambda(\theta, x)) - \ln(y_i!) \right)$. Программно реализовав данную функцию и запустив метод fit\_all у объекта класса MLM, были получены следующие результаты:
 
-\newcommand{\lambdasTab}{$\lambda_i$}
-\newcommand{\criteriaTab}{$AIC_c$}
-\newcommand{\paramsTab}{$\hat{\theta}$}
-\newcommand{\lenFirstColumnTab}{1.5cm}
-\begin{center}
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 46$ & \multicolumn{7}{c|}{модели с признаковым пространством $features_1$} \\ \hline\hline
-        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        \criteriaTab & $516.82$ & $617.6$ & $617.6$ & $516.56$ & $617.6$ & $516.84$ & $517.6$ \\ \hline
-        \paramsTab & [$1.18$, $-271.63$] & [$-0.00$, $0.00$] & [$0.00$, $0.00$] & [$-0.80$, $208.15$] & [$-0.00$, $0.00$] & [$0.95$, $-236.29$] & [$2.66$, $-549.73$] \\ \hline
-%        \multicolumn{8}{l}{} \\
-    \end{tabular}
-}
+\subfile{poisson_table}
 
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 41$ & \multicolumn{7}{c|}{модели с признаковым пространством $features_2$} \\ \hline\hline
-        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        \criteriaTab & $491.77$ & $606.39$ & $485.09$ & $486.11$ & $606.39$ & $483.01$ & $477.09$ \\ \hline
-        \paramsTab & [$1.17$, $-160.85$, $39.30$] & [$-0.00$, $0.00$, $0.00$] & [$0.56$, $-114.67$, $35.95$] & [$-0.83$, $212.70$, $-56.93$] & [$-0.00$, $0.00$, $0.00$] & [$1.05$, $-281.75$, $83.44$] & [$3.28$, $-486.77$, $276.36$] \\ \hline
-%        \multicolumn{8}{l}{} \\
-    \end{tabular}
-}
+%Заметим, что для моделей с $\lambda=\lambda_2$ оценки параметра $\hat\theta$ получились тривиальными, то есть все компоненты вектора $\hat\theta$ получились равными нулю. Также для моделей с $\lambda=\lambda_5$ оценка $\hat\theta$ тривиальная для всех признаковых пространств. Также можно заметить, что для моделей с $\lambda=\lambda_3$ некоторые оценки также тривиальны.
 
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 37$ & \multicolumn{7}{c|}{модели с признаковым пространством $features_3$} \\ \hline\hline
-        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        \criteriaTab & $466.01$ & $598.47$ & $457.63$ & $458.97$ & $598.47$ & $453.11$ & $448.95$ \\ \hline
-        \paramsTab & [$1.29$, $-201.69$, $0.82$] & [$-0.00$, $0.00$, $0.00$] & [$0.78$, $-67.92$, $1.64$] & [$-0.94$, $280.75$, $-1.44$] & [$-0.00$, $0.00$, $0.00$] & [$1.21$, $-426.41$, $2.49$] & [$3.91$, $-1000.00$, $7.26$] \\ \hline
-%        \multicolumn{8}{l}{} \\
-    \end{tabular}
-}
-
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 42$ & \multicolumn{7}{c|}{модели с признаковым пространством $features_4$} \\ \hline\hline
-        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        \criteriaTab & $450.45$ & $611.95$ & $474.13$ & $444.81$ & $611.95$ & $444.77$ & $460.89$ \\ \hline
-        \paramsTab & [$2.11$, $-180.43$, $-2.36$] & [$-0.00$, $0.00$, $0.00$] & [$1.98$, $3.85$, $-2.09$] & [$-1.70$, $207.42$, $1.96$] & [$-0.00$, $0.00$, $0.00$] & [$2.19$, $-302.64$, $-2.53$] & [$5.94$, $-74.64$, $-6.39$] \\ \hline
-%        \multicolumn{8}{l}{} \\
-    \end{tabular}
-}
-
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 42$ & \multicolumn{7}{c|}{модели с признаковым пространством $features_5$} \\ \hline\hline
-        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        \criteriaTab & $458.47$ & $586.35$ & $586.35$ & $447.81$ & $586.35$ & $446.29$ & $454.43$ \\ \hline
-        \paramsTab & [$-0.09$, $-237.26$, $0.03$] & [$-0.00$, $0.00$, $-0.00$] & [$0.00$, $0.00$, $0.00$] & [$0.44$, $216.06$, $-0.03$] & [$-0.00$, $0.00$, $-0.00$] & [$-0.64$, $-262.77$, $0.03$] & [$-0.39$, $-431.93$, $0.07$] \\ \hline
-%        \multicolumn{8}{l}{} \\
-    \end{tabular}
-}
-
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 37$ & \multicolumn{7}{c|}{модели с признаковым пространством $features_6$} \\ \hline\hline
-        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        \criteriaTab & $435.49$ & $575.39$ & $504.13$ & $427.71$ & $575.39$ & $425.77$ & $436.55$ \\ \hline
-        \paramsTab & [$-0.15$, $-148.04$, $53.13$, $0.03$] & [$-0.00$, $0.00$, $0.00$, $-0.00$] & [$9.24$, $3.94$, $3.55$, $-0.11$] & [$0.29$, $244.79$, $-52.47$, $-0.02$] & [$-0.00$, $0.00$, $0.00$, $-0.00$] & [$-0.47$, $-328.73$, $75.88$, $0.03$] & [$-0.31$, $-633.78$, $7.19$, $0.08$] \\ \hline
-%        \multicolumn{8}{l}{} \\
-    \end{tabular}
-}
-
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 35$ & \multicolumn{7}{c|}{модели с признаковым пространством $features_7$} \\ \hline\hline
-        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        \criteriaTab & $400.13$ & $574.21$ & $574.21$ & $401.53$ & $574.21$ & $401.33$ & $409.59$ \\ \hline
-        \paramsTab & [$0.92$, $-105.35$, $34.34$, $0.02$, $-2.24$] & [$-0.00$, $0.00$, $0.00$, $-0.00$, $0.00$] & [$0.00$, $0.00$, $0.00$, $0.00$, $0.00$] & [$-0.98$, $242.26$, $-22.62$, $-0.01$, $1.73$] & [$-0.00$, $0.00$, $0.00$, $-0.00$, $0.00$] & [$1.28$, $-373.54$, $41.10$, $0.02$, $-2.34$] & [$2.69$, $-57.95$, $235.44$, $0.08$, $-8.15$] \\ \hline
-%        \multicolumn{8}{l}{} \\
-    \end{tabular}
-}
-
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n=37$ & \multicolumn{7}{c|}{модели с признаковым пространством $features_8$} \\ \hline\hline
-        \lambdasTab & $\lambda_1$ & $\lambda_2$ & $\lambda_3$ & $\lambda_4$ & $\lambda_5$ & $\lambda_6$ & $\lambda_7$ \\ \hline
-        \criteriaTab & $410.65$ & $575.39$ & $575.39$ & $419.57$ & $575.39$ & $419.63$ & $419.13$ \\ \hline
-        \paramsTab & [$0.55$, $39.28$, $0.03$, $-2.14$] & [$-0.00$, $0.00$, $-0.00$, $0.00$] & [$0.00$, $0.00$, $0.00$, $0.00$] & [$-0.49$, $-15.96$, $-0.02$, $1.44$] & [$-0.00$, $0.00$, $-0.00$, $0.00$] & [$0.31$, $26.23$, $0.03$, $-1.97$] & [$1.91$, $281.49$, $0.08$, $-6.90$] \\ \hline
-%        \multicolumn{8}{l}{} \\
-    \end{tabular}
-}
-\end{center}
-\captionof{table}{модели Пуассоновской регрессии с признаковыми пространствами $\{features_i\}_{i=1}^8$ и $\{\lambda_i\}_{i=1}^7$}
-\label{tab:poisson_tab}
+%Заметим также, что для тривиальных моделей, соответствующих одному признаковому пространству, критерии Акаике совпадают, например, для $(features_7, \lambda_2) AIC_c = 574.21$, для $(features_7, \lambda_3) AIC_c = 574.21$, для $(features_7, \lambda_5) AIC_c = 574.21$.
 
 
-\section{Геометрическая регрессия}
+Общий диапазон значений критерия Акаике для всех моделей: $AIC_c \in [356.87, 567.74]$.
 
-Предположим, что количество сшедших вагонов имеет геометрическое распределение. Тогда функция вероятности $p(n) = (1-p)^n p$. Пусть вероятность успеха в серии испытаний Бернулли $\lambda = \lambda(\theta, x)$, где $\theta$ -- вектор параметров, $x$ -- вектор, описывающий объект. Выберем набор функций $p$, параметризованных по $\theta$:
+
+Наилучшее значение по показателям качества получилось для модели $(features_7, \lambda_1)$. Таким образом, в моделях Пуассоновской регрессии показатель качества по критерию Акаике для наилучшей модели равняется $356.87$.
+
+
+
+Будем считать модель тривиальной, если ее признаковое пространство имеет размерность, равную единице. При этом для всех наблюдений данное свойство имеет постоянное значение. Вычислим значение критерия Акаике для тривиальной модели. В качестве исходных наблюдений возьмем такой же набор, как в модели, соответствующей $(features_7, \lambda_1)$. Проведя вычисления, было получено, что $AIC_{c, trivial} = 551.27$. Найдем отношение $AIC_c$, соответствующей наилучшей модели, к $AIC_{c, trivial}$. По данному отношению можно считать качество модели, которое может изменяться от нуля до единицы. При этом чем ближе значение к нулю, тем больше качество модели. Рассчитав значение данного отношения, получим, что $\dfrac{AIC_c}{AIC_{c, trivial}} = 0.54$.
+
+
+
+%Учитывая, что для каждого признакового пространства нашлась хотя бы одна тривиальная модель модель, оставшиеся нетривиальные модели можно сравнивать с ними в рамках одного признакового пространства.
+
+%\begin{table}[H]
+%    \resizebox{\textwidth}{!}{
+%    \begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+%        \hline
+%        & $features_1$ & $features_2$ & $features_3$ & $features_4$ & $features_5$ & $features_6$ & $features_7$ & $features_8$ \\ \hline
+%        $AIC_{c,best}$ & $516.56$ & $477.09$ & $453.11$ & $444.77$ & $446.29$ & $425.77$ & $400.13$ & $410.65$ \\ \hline
+%        $AIC_{c,trivial}$ & $617.6$ & $606.39$ & $598.47$ & $611.95$ & $586.35$ & $575.39$ & $574.21$ & $575.39$ \\ \hline
+%        $\frac{AIC_{c,best}}{AIC_{c,trivial}}$ & $0.83$ & $0.79$ & $0.75$ & $0.73$ & $0.76$ & $0.74$ & $0.69$ & $0.7$ \\ \hline
+%        Мощность выборки & 46 & 41 & 37 & 42 & 42 & 37 & 35 & 37 \\ \hline
+%        $\lambda_{i, best}$ & $\lambda_4$ & $\lambda_3$ & $\lambda_6$ & $\lambda_6$ & $\lambda_6$ & $\lambda_6$ & $\lambda_1$ & $\lambda_1$ \\ \hline
+%    \end{tabular}
+%    }
+%\end{table}
+%\captionof{table}{Сравнение лучших моделей Пуассоновской регрессии с тривиальными}
+%\label{tab:poisson_comp}
+
+%\begin{wrapfigure}{r}{0.35\linewidth} 
+%    \vspace{1ex}
+%    \includegraphics[width=\linewidth]{src/img/rounded_relu.png}
+%    \caption{Сглаженная ReLU}
+%    \label{fig:rounded_relu}
+%\end{wrapfigure}
+
+%В 4 из 8 признаковых пространств функция $\lambda_6$ оказалась наилучшей среди других по значению критерия Акаике. Данная функция эквивалентна функции $f(x) = x \left( \dfrac{\pi}{2} + \arctan(x) \right) + 1$. По своей структуре данная функция напоминает функцию $ReLU(x) = \begin{cases}
+%    x, &\text{если $x > 0$,}\\
+%    0, &\text{иначе.}
+%\end{cases}$, при этом $f(x)$, очевидно, также имеет 2 асимптоты: $y=\pi x$, $y=0$. В отличие от классической функции ReLU она является более гладкой, имеет непрерывную производную во всех точках.
+
+
+\subsection{Геометрическая регрессия}
+
+Предположим, что количество сошедших вагонов имеет геометрическое распределение. Тогда функция вероятности $p(n) = (1-p)^n p$. Пусть вероятность успеха в серии испытаний Бернулли $p = p(\theta, x)$, где $\theta$ -- вектор параметров, $x$ -- вектор, описывающий объект. Выберем набор функций $p$, параметризованных по $\theta$:
 \begin{enumerate}[label=\arabic*.]
-    \item $p_1(\theta, x) = e^{(\theta, x)}$;
-    \item $p_2(\theta, x) = e^{-(\theta, x)^2}$;
-    \item $p_3(\theta, x) = \frac{1}{1+e^{-(\theta, x)}}$;
-    \item $p_4(\theta, x) = \frac{1}{1 + (\theta, x)^2}$;
-    \item $p_5(\theta, x) = (\theta, x) (\frac{\pi}{2} + \arctan(\theta, x)) + 1$.
+    \item $p_1(\theta, x) = e^{\left\langle \theta, x\right\rangle}$;
+    \item $p_2(\theta, x) = e^{-[\left\langle \theta, x\right\rangle]^2}$;
+    \item $p_3(\theta, x) = \frac{1}{1+e^{-\left\langle \theta, x\right\rangle}}$;
+    \item $p_4(\theta, x) = \frac{1}{1 + [\left\langle \theta, x\right\rangle]^2}$;
+    \item $p_5(\theta, x) = \left\langle \theta, x\right\rangle (\frac{\pi}{2} + \arctan(\left\langle \theta, x\right\rangle)) + 1$.
 \end{enumerate}
 
 Метод SHGO, использованный при оптимизации в Пуассоновской регрессии, оказался не успешным для геометрической регрессии и данного набора данных. Ни для одной модели геометрической регрессии не удалось найти оптимальную точку. Вероятно, это связано со сложным видом оптимизационной функции в признаковых пространствах. По этой причине были использованы другие методы глобальной оптимизации (Dual Annealing, Differential Evolution, Basin-hopping), также реализованные в модуле scipy.optimize.
 
-Наиболее лучшие результаты были получены с помощью метода Dual Annealing (алгоритм имитации обжига). В качестве граничного множества для искомых параметров был взят гиперкуб со $стороной 2000$ и центром в начале координат (т.е$. -1000 \leq \theta_i \leq 1000~~i = \overline{0,n}$, где $n$ -- размерность соответствующего признакового пространства).
+Наилучшие результаты были получены с помощью метода Dual Annealing (алгоритм имитации обжига). В качестве граничного множества для искомых параметров был взят гиперкуб со стороной  $2000$ и центром в начале координат (т.е$. -1000 \leq \theta_i \leq 1000~~i = \overline{0,n}$, где $n$ -- размерность соответствующего признакового пространства).
 
-В главе 1 была получена функция логарифмического правдоподобия: $l = \sum\limits_{i = 1}^N ( y_i \ln(1 - p(x_i,\theta)) + \ln(p(x_i,\theta)) )$. Программно реализовав данную функцию и запустив метод fit\_all у объекта класса MLM, были получены следующие результаты:
+Ранее была получена функция логарифмического правдоподобия: $l = \sum\limits_{i = 1}^N ( y_i \ln(1 - p(\theta, x_i)) + \ln(p(\theta, x_i)) )$. Программно реализовав данную функцию и запустив метод fit\_all у объекта класса MLM, были получены следующие результаты:
 
-\newcommand{\pGeomTab}{$p_i$}
-\begin{center}
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 46$ & \multicolumn{5}{c|}{модели с признаковым пространством $features_1$} \\ \hline\hline
-        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
-        \criteriaTab & $200.42$ & $200.66$ & $200.7$ & $200.36$ & $200.3$ \\ \hline
-        \paramsTab & [$-1.46$, $215.57$] & [$1.20$, $-90.37$] & [$-1.18$, $278.32$] & [$1.82$, $-233.20$] & [$-0.95$, $150.96$] \\ \hline
-%        \multicolumn{6}{l}{} \\
-    \end{tabular}
-}
-
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 41$ & \multicolumn{5}{c|}{модели с признаковым пространством $features_2$} \\ \hline\hline
-        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
-        \criteriaTab & $182.17$ & $186.19$ & $185.53$ & $178.59$ & $180.33$ \\ \hline
-        \paramsTab & [$-1.57$, $304.90$, $-70.79$] & [$1.14$, $-853.89$, $-106.71$] & [$-1.27$, $388.34$, $-103.97$] & [$-1.97$, $392.24$, $-123.78$] & [$-1.00$, $150.21$, $-64.07$] \\ \hline
-%        \multicolumn{6}{l}{} \\
-    \end{tabular}
-}
+\clearpage
+\subfile{geometry_table}
 
 
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 37$ & \multicolumn{5}{c|}{модели с признаковым пространством $features_3$} \\ \hline\hline
-        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
-        \criteriaTab & $170.43$ & $173.19$ & $172.89$ & $165.23$ & $168.99$ \\ \hline
-        \paramsTab & [$-1.52$, $238.17$, $-2.18$] & [$-1.26$, $171.59$, $-0.90$] & [$-1.40$, $560.11$, $-3.07$] & [$2.05$, $-523.11$, $3.38$] & [$-1.03$, $169.06$, $-1.39$] \\ \hline
-%        \multicolumn{6}{l}{} \\
-    \end{tabular}
-}
+Общий диапазон значений критерия Акаике для всех моделей: $AIC_c \in [153.65, 918.43]$.
 
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 42$ & \multicolumn{5}{c|}{модели с признаковым пространством $features_4$} \\ \hline\hline
-        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
-        \criteriaTab & $176.33$ & $176.33$ & $176.67$ & $174.73$ & $176.85$ \\ \hline
-        \paramsTab & [$-2.10$, $111.27$, $1.61$] & [$-1.57$, $111.19$, $0.86$] & [$-2.35$, $342.71$, $2.72$] & [$2.75$, $-255.76$, $-1.99$] & [$-1.31$, $81.32$, $0.94$] \\ \hline
-%        \multicolumn{6}{l}{} \\
-    \end{tabular}
-}
 
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 42$ & \multicolumn{5}{c|}{модели с признаковым пространством $features_5$} \\ \hline\hline
-        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
-        \criteriaTab & $171.09$ & $173.51$ & $173.91$ & $168.97$ & $179.65$ \\ \hline
-        \paramsTab & [$0.03$, $133.64$, $-0.03$] & [$-0.58$, $111.49$, $-0.01$] & [$0.80$, $332.24$, $-0.04$] & [$-0.39$, $279.20$, $-0.03$] & [$-0.77$, $201.93$, $-0.01$] \\ \hline
-%        \multicolumn{6}{l}{} \\
-    \end{tabular}
-}
+Наилучшее значение по показателям качества получилось для модели $(features_7, p_4)$. Таким образом, в моделях геометрической регрессии показатель качества по критерию Акаике для наилучшей модели равняется $153.65$.
 
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 37$ & \multicolumn{5}{c|}{модели с признаковым пространством $features_6$} \\ \hline\hline
-        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
-        \criteriaTab & $670.07$ & $170.15$ & $164.29$ & $160.83$ & $165.11$ \\ \hline
-        \paramsTab & [$-22.08$, $927.97$, $-55.98$, $0.27$] & [$0.97$, $-838.88$, $-93.59$, $0.00$] & [$0.39$, $439.55$, $-89.77$, $-0.03$] & [$0.91$, $-413.88$, $76.69$, $0.02$] & [$-0.54$, $105.09$, $-50.14$, $-0.01$] \\ \hline
-%        \multicolumn{6}{l}{} \\
-    \end{tabular}
-}
 
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 35$ & \multicolumn{5}{c|}{модели с признаковым пространством $features_7$} \\ \hline\hline
-        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
-        \criteriaTab & $3365.29$ & $157.83$ & $158.03$ & $153.79$ & $160.31$ \\ \hline
-        \paramsTab & [$-122.42$, $1000.00$, $-1000.00$, $1.36$, $21.71$] & [$1.29$, $-147.10$, $15.81$, $0.00$, $-0.72$] & [$-1.45$, $456.03$, $-52.52$, $-0.01$, $2.32$] & [$-0.68$, $89.66$, $-113.05$, $-0.05$, $3.31$] & [$-1.42$, $49.85$, $-3.56$, $-0.00$, $1.34$] \\ \hline
-%        \multicolumn{6}{l}{} \\
-    \end{tabular}
-}
+Так же как и для Пуассоновской регрессии вычислим отношение значения критерия Акаике лучшей модели к соответствующей ей тривиальной модели: $\dfrac{AIC_c}{AIC_{c, trivial}} = \dfrac{153.65}{249.89} = 0.61$.
 
-\resizebox{\textwidth}{!}{%
-    \begin{tabular}{|p{\lenFirstColumnTab}||p{4cm}|p{4cm}|p{4cm}|p{4cm}|p{4cm}|}
-        \hline
-        $n = 37$ & \multicolumn{5}{c|}{модели с признаковым пространством $features_8$} \\ \hline\hline
-        \pGeomTab & $p_1$ & $p_2$ & $p_3$ & $p_4$ & $p_5$ \\ \hline
-        \criteriaTab & $1467.35$ & $177.75$ & $164.23$ & $155.27$ & $352.91$ \\ \hline
-        \paramsTab & [$-51.83$, $-1000.00$, $0.52$, $18.16$] & [$-0.18$, $-49.54$, $-0.03$, $1.64$] & [$-0.59$, $-15.12$, $-0.02$, $1.88$] & [$0.34$, $99.11$, $0.05$, $-3.08$] & [$-19.40$, $-550.73$, $0.17$, $8.78$] \\ \hline
-%        \multicolumn{6}{l}{} \\
-    \end{tabular}
-}
-\end{center}
-\captionof{table}{модели геометрической регрессии с признаковыми пространствами $\{features_i\}_{i=1}^8$ и $\{p_i\}_{i=1}^5$}
-\label{tab:geometry_tab}
 
+
+%Построим тривиальные модели для каждого признакового пространства. Для сравнения с оставшимися моделями.
+
+%\begin{table}[H]
+%    \resizebox{\textwidth}{!}{
+%        \begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+%            \hline
+%            & $features_1$ & $features_2$ & $features_3$ & $features_4$ & $features_5$ & $features_6$ & $features_7$ & $features_8$ \\ \hline
+%            $AIC_{c,best}$ & $200.3$ & $178.59$ & $165.23$ & $174.73$ & $168.97$ & $160.83$ & $153.79$ & $155.27$ \\ \hline
+%            $AIC_{c,trivial}$ & $241.34$ & $234.01$ & $228.53$ & $238.15$ & $227.05$ & $219.97$ & $220.01$ & $219.97$ \\ \hline
+%            $\frac{AIC_{c,best}}{AIC_{c,trivial}}$ & $0.83$ & $0.76$ & $0.72$ & $0.73$ & $0.74$ & $0.73$ & $0.69$ & $0.7$ \\ \hline
+%            Мощность выборки & 46 & 41 & 37 & 42 & 42 & 37 & 35 & 37 \\ \hline
+%            $p_{i, best}$ & $p_5$ & $p_4$ & $p_4$ & $p_4$ & $p_4$ & $p_4$ & $p_4$ & $p_4$ \\ \hline
+%        \end{tabular}
+%    }
+%\end{table}
+%\captionof{table}{Сравнение лучших моделей геометрической регрессии с тривиальными}
+%\label{tab:geom_comp}
+
+Следует отметить, что большая часть полученных значений критерия Акаике в геометрической регрессии меньше, чем полученные значения критерия Акаике в Пуассоновской регрессии, что говорит о том, что модели геометрической регрессии для данной задачи являются более предпочтительными по сравнению с моделями Пуассоновской регрессии.
+%Также отношения значения критерия Акаике наилучшей модели к соответствующей тривиальной модели для двух типов регрессий отличаются более чем на порядок.
 
 
 

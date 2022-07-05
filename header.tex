@@ -24,16 +24,16 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[R]{\thepage}
+\fancyfoot[C]{\thepage}
 \fancyheadoffset{0mm}
 \fancyfootoffset{0mm}
 \setlength{\headheight}{17pt}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
-\fancypagestyle{plain}{
-    \fancyhf{}
-    \rhead{\thepage}}
-\setcounter{page}{5} % начать нумерацию страниц с №5
+%\fancypagestyle{plain}{
+%    \fancyhf{}
+%    \rhead{\thepage}}
+\setcounter{page}{2} % начать нумерацию страниц с №2
 
 
 
@@ -42,10 +42,10 @@
 \usepackage{subcaption}
 \DeclareCaptionLabelFormat{gostfigure}{Рисунок #2}
 \DeclareCaptionLabelFormat{gosttable}{Таблица #2}
-\DeclareCaptionLabelSeparator{gost}{~---~}
+\DeclareCaptionLabelSeparator{gost}{~~}
 \captionsetup{labelsep=gost}
-\captionsetup[figure]{labelformat=gostfigure}
-\captionsetup[table]{labelformat=gosttable}
+\captionsetup[figure]{labelformat=gostfigure, justification=centering, singlelinecheck=false}
+\captionsetup[table]{labelformat=gosttable, justification=raggedright, singlelinecheck=false}
 \renewcommand{\thesubfigure}{\asbuk{subfigure}}
 
 
@@ -79,8 +79,8 @@
 % поля
 \usepackage{geometry}
 \geometry{left=3cm}
-\geometry{right=1.7cm}
-\geometry{top=2.2cm}
+\geometry{right=1.5cm}
+\geometry{top=2cm}
 \geometry{bottom=2cm}
 
 
@@ -190,6 +190,35 @@
 \usepackage{amssymb}  % готические буквы
 
 \usepackage{wrapfig}  % обтекание картинок текстом
+
+
+
+
+\newcommand{\lambdasTab}{$\lambda_i$}
+\newcommand{\criteriaTab}{$AIC_c$}
+\newcommand{\paramsTab}{$\hat{\theta}$}
+\newcommand{\lenFirstColumnTab}{1.5cm}
+
+\newcommand{\pGeomTab}{$p_i$}
+
+
+\usepackage{lastpage209}
+
+
+\usepackage{comment}
+
+
+\usepackage{fancyhdr}
+\addto\captionsrussian{\renewcommand{\chaptername}{}}
+\usepackage{titlesec}
+
+%\titleformat{\chapter}[display]
+%    {\filcenter}
+%    {\MakeUppercase{\text{ГЛАВА}} \thechapter}
+%    {8pt}
+%    {\bfseries}{}
+
+
 
 
 
